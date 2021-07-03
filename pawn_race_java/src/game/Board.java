@@ -33,29 +33,13 @@ public class Board {
     return pieces;
   }
 
+  public void addPiece(Piece piece) { pieces.add(piece); }
+
   public void removePiece(Piece piece) {
     pieces.remove(piece);
   }
 
   private void setUpBoard() {
-    pieces.add(new Rook  (Colour.WHITE, new Position(0, 0)));
-    pieces.add(new Rook  (Colour.WHITE, new Position(0, 7)));
-    pieces.add(new Knight(Colour.WHITE, new Position(0, 1)));
-    pieces.add(new Knight(Colour.WHITE, new Position(0, 6)));
-    pieces.add(new Bishop(Colour.WHITE, new Position(0, 2)));
-    pieces.add(new Bishop(Colour.WHITE, new Position(0, 5)));
-    pieces.add(new Queen (Colour.WHITE, new Position(0, 3)));
-    pieces.add(new King  (Colour.WHITE, new Position(0, 4)));
-
-    pieces.add(new Rook  (Colour.BLACK, new Position(7, 0)));
-    pieces.add(new Rook  (Colour.BLACK, new Position(7, 7)));
-    pieces.add(new Knight(Colour.BLACK, new Position(7, 1)));
-    pieces.add(new Knight(Colour.BLACK, new Position(7, 6)));
-    pieces.add(new Bishop(Colour.BLACK, new Position(7, 2)));
-    pieces.add(new Bishop(Colour.BLACK, new Position(7, 5)));
-    pieces.add(new Queen (Colour.BLACK, new Position(7, 3)));
-    pieces.add(new King  (Colour.BLACK, new Position(7, 4)));
-
     for (int i = 0; i < noCols; i++) {
       pieces.add(new Pawn(Colour.WHITE, new Position(1, i)));
       pieces.add(new Pawn(Colour.BLACK, new Position(6, i)));

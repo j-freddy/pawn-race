@@ -66,7 +66,9 @@ public class DefaultPiece implements Piece {
 
   @Override
   public List<Move> getFilteredValidMoves(Board board) {
-    return filterMovesCausingPlayerToBeInCheck(getValidMoves(board), board);
+    // return filterMovesCausingPlayerToBeInCheck(getValidMoves(board), board);
+    // In Pawn Race, we don't have a king
+    return getValidMoves(board);
   }
 
   @Override

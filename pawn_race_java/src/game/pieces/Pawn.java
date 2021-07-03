@@ -20,7 +20,7 @@ public class Pawn extends DefaultPiece implements Piece {
     return PieceType.PAWN;
   }
 
-  private void checkMoveValidityAndAdd
+  private boolean checkMoveValidityAndAdd
       (Board board, ArrayList<Move> movesList, Position pos, boolean needCapture) {
 
     Optional<Piece> maybePiece = board.findPieceAtPosition(pos);
@@ -32,13 +32,17 @@ public class Pawn extends DefaultPiece implements Piece {
 
         if (!piece.getColour().equals(getColour())) {
           movesList.add(move);
+          return true;
         }
       }
     } else {
       if (maybePiece.isEmpty()) {
         movesList.add(move);
+        return true;
       }
     }
+
+    return false;
   }
 
   @Override
@@ -50,20 +54,21 @@ public class Pawn extends DefaultPiece implements Piece {
     newPos = position.copy();
     newPos.moveForward(colour);
     assert !newPos.isOutOfBounds(board);
-
-    checkMoveValidityAndAdd(board, moves, newPos, false);
+    boolean canMoveOneSquare = checkMoveValidityAndAdd(board, moves, newPos, false);
 
     // Move forward 2 squares
     int initialRowOffset = 1;
+    // (Only possible if pawn can move forward 1 square)
+    if (canMoveOneSquare) {
+      if ((position.getRow() == initialRowOffset && colour.equals(Colour.WHITE))
+          || (position.getRow() == (board.getNoRows() - 1) - initialRowOffset
+          && colour.equals(Colour.BLACK))) {
+        newPos = position.copy();
+        newPos.moveForward(colour).moveForward(colour);
+        assert !newPos.isOutOfBounds(board);
 
-    if ((position.getRow() == initialRowOffset && colour.equals(Colour.WHITE))
-     || (position.getRow() == (board.getNoRows() - 1) - initialRowOffset
-        && colour.equals(Colour.BLACK))) {
-      newPos = position.copy();
-      newPos.moveForward(colour).moveForward(colour);
-      assert !newPos.isOutOfBounds(board);
-
-      checkMoveValidityAndAdd(board, moves, newPos, false);
+        checkMoveValidityAndAdd(board, moves, newPos, false);
+      }
     }
 
     // Capture pieces (left)
@@ -81,6 +86,12 @@ public class Pawn extends DefaultPiece implements Piece {
     }
 
     return moves;
+  }
+
+  public void promote(Board board) {
+    Piece piece = new Queen(colour, position);
+    board.removePiece(this);
+    board.addPiece(piece);
   }
 
   @Override

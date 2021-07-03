@@ -2,8 +2,10 @@ package app;
 
 import game.Board;
 import game.Game;
+import game.misc.Colour;
 import game.misc.Move;
 import game.misc.Position;
+import game.pieces.Pawn;
 import game.pieces.Piece;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -116,6 +118,38 @@ public class BoardController {
     }
   }
 
+  // Temporary alternative, since images are not drawing (bug)
+  // @x, @y is top left
+  private void drawPawn(int x, int y, Colour colour) {
+    GraphicsContext ctx = canvas.getGraphicsContext2D();
+
+    if (colour == Colour.WHITE) {
+      ctx.setFill(Color.WHITE);
+    } else {
+      ctx.setFill(Color.BLACK);
+    }
+
+    double diameterFactor = 0.7;
+    double offsetFactor = (1 - diameterFactor) / 2;
+
+    ctx.fillOval(
+        x + offsetFactor * getCellWidth(),
+        y + offsetFactor * getCellHeight(),
+        getCellWidth() * diameterFactor,
+        getCellHeight() * diameterFactor
+    );
+
+    // Draw black outline
+    ctx.setLineWidth(getCellWidth() * 0.08);
+    ctx.setFill(Color.BLACK);
+    ctx.strokeOval(
+        x + offsetFactor * getCellWidth(),
+        y + offsetFactor * getCellHeight(),
+        getCellWidth() * diameterFactor,
+        getCellHeight() * diameterFactor
+    );
+  }
+
   public void drawPieces() {
     GraphicsContext ctx = canvas.getGraphicsContext2D();
     Board board = getBoard();
@@ -129,7 +163,11 @@ public class BoardController {
       Image img = gui.getImageOfPiece(piece);
 
       if (img != null) {
-        ctx.drawImage(img, x, y, getCellWidth(), getCellHeight());
+        // ctx.drawImage(img, x, y, getCellWidth(), getCellHeight());
+
+        // In Pawn Race, every piece is a pawn
+        assert(piece instanceof Pawn);
+        drawPawn(x, y, piece.getColour());
       } else {
         ctx.setFill(Color.BLACK);
         ctx.fillRect(x, y, getCellWidth(), getCellHeight());
