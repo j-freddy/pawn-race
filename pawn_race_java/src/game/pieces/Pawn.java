@@ -3,6 +3,7 @@ package game.pieces;
 import game.Board;
 import game.misc.Colour;
 import game.misc.Move;
+import game.misc.MoveType;
 import game.misc.Position;
 
 import java.util.ArrayList;
@@ -24,25 +25,36 @@ public class Pawn extends DefaultPiece implements Piece {
       (Board board, ArrayList<Move> movesList, Position pos, boolean needCapture) {
 
     Optional<Piece> maybePiece = board.findPieceAtPosition(pos);
-    Move move = new Move(this, pos);
 
     if (needCapture) {
       if (maybePiece.isPresent()) {
         Piece piece = maybePiece.get();
 
         if (!piece.getColour().equals(getColour())) {
+          Move move = new Move(this, pos, MoveType.CAPTURE);
           movesList.add(move);
           return true;
         }
       }
     } else {
       if (maybePiece.isEmpty()) {
+        Move move = new Move(this, pos, MoveType.PASSIVE);
         movesList.add(move);
         return true;
       }
     }
 
     return false;
+  }
+
+  private boolean canEnPassant(Board board, Position pos) {
+    Piece piece = board.getLastMoved();
+
+    if (!(piece instanceof Pawn && piece.getNumTimesMoved() == 1)) {
+      return false;
+    }
+
+    return piece.getPosition().equals(pos) && !piece.getColour().equals(colour);
   }
 
   @Override
@@ -83,6 +95,29 @@ public class Pawn extends DefaultPiece implements Piece {
     newPos.moveRight().moveForward(colour);
     if (!newPos.isOutOfBounds(board)) {
       checkMoveValidityAndAdd(board, moves, newPos, true);
+    }
+
+    // Check En Passant
+    int enPassantRow = 4;
+    if ((position.getRow() == enPassantRow && colour.equals(Colour.WHITE))
+        || (position.getRow() == (board.getNoCols() - 1) - enPassantRow && colour.equals(Colour.BLACK))) {
+      // En Passant left
+      newPos = position.copy();
+      newPos.moveLeft();
+
+      if (canEnPassant(board, newPos)) {
+        newPos.moveForward(colour);
+        moves.add(new Move(this, newPos, MoveType.EN_PASSANT));
+      }
+
+      // En Passant right
+      newPos = position.copy();
+      newPos.moveRight();
+
+      if (canEnPassant(board, newPos)) {
+        newPos.moveForward(colour);
+        moves.add(new Move(this, newPos, MoveType.EN_PASSANT));
+      }
     }
 
     return moves;

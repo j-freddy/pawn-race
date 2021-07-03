@@ -12,6 +12,7 @@ public class Board {
   private final int noRows = 8;
   private final int noCols = 8;
   private ArrayList<Piece> pieces = new ArrayList<>();
+  private Piece lastMoved;
 
   public Board () {
     this.setUpBoard();
@@ -37,6 +38,14 @@ public class Board {
 
   public void removePiece(Piece piece) {
     pieces.remove(piece);
+  }
+
+  public Piece getLastMoved() {
+    return lastMoved;
+  }
+
+  public void setLastMoved(Piece lastMoved) {
+    this.lastMoved = lastMoved;
   }
 
   private void setUpBoard() {

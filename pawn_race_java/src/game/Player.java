@@ -2,6 +2,7 @@ package game;
 
 import game.misc.Colour;
 import game.misc.Move;
+import game.misc.MoveType;
 import game.misc.Position;
 import game.pieces.King;
 import game.pieces.Piece;
@@ -43,6 +44,15 @@ public class Player {
       return false;
     }
 
+    // Set type of move
+    Optional<Move> moveInValidMoves = getValidMoves()
+        .stream()
+        .filter(move::equals)
+        .findFirst();
+
+    assert(moveInValidMoves.isPresent());
+    move = moveInValidMoves.get();
+
     // If there is a piece, capture that piece.
     Optional<Piece> maybePiece = b.findPieceAtPosition(move.getPosTo());
     if (maybePiece.isPresent()) {
@@ -50,8 +60,20 @@ public class Player {
       b.removePiece(pieceToCapture);
     }
 
+    // Pawn Race: En Passant
+    if (move.getMoveType() == MoveType.EN_PASSANT) {
+      maybePiece = b.findPieceAtPosition(move.getPosTo().getPosBelow(move.getPiece().getColour()));
+      assert(maybePiece.isPresent());
+      Piece pieceToCapture = maybePiece.get();
+      b.removePiece(pieceToCapture);
+    }
+
     // Move piece to square
     move.getPiece().setPosition(move.getPosTo());
+
+    // Record piece last moved
+    b.setLastMoved(move.getPiece());
+    move.getPiece().incrementNumTimesMoved();
 
     return true;
   }

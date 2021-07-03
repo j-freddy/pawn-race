@@ -11,6 +11,8 @@ public interface Piece {
   Colour getColour();
   PieceType getPieceType();
   Position getPosition();
+  int getNumTimesMoved();
+  void incrementNumTimesMoved();
   void setPosition(Position position);
   List<Move> getValidMoves(Board board);
   List<Move> getFilteredValidMoves(Board board);

@@ -13,6 +13,7 @@ public class DefaultPiece implements Piece {
 
   protected Colour colour;
   protected Position position;
+  protected int numTimesMoved;
 
   public DefaultPiece (Colour colour, Position position) {
     this.colour = colour;
@@ -32,6 +33,16 @@ public class DefaultPiece implements Piece {
   @Override
   public Position getPosition() {
     return position;
+  }
+
+  @Override
+  public int getNumTimesMoved() {
+    return numTimesMoved;
+  }
+
+  @Override
+  public void incrementNumTimesMoved() {
+    numTimesMoved++;
   }
 
   @Override
