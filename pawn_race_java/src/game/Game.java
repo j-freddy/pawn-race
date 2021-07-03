@@ -2,6 +2,7 @@ package game;
 
 import game.misc.Colour;
 import game.misc.Move;
+import game.misc.Status;
 
 import java.util.List;
 import java.util.Random;
@@ -13,12 +14,14 @@ public class Game {
   private Player playerWhite;
   private Player playerBlack;
   private Player playerTurn;
+  private Status status;
 
   public Game() {
     this.board = new Board();
     this.playerWhite = new Player(Colour.WHITE, this.board);
     this.playerBlack = new Player(Colour.BLACK, this.board);
     this.playerTurn = this.playerWhite;
+    this.status = Status.PLAYING;
   }
 
   public Board getBoard() {
@@ -27,6 +30,10 @@ public class Game {
 
   public Player getPlayerTurn() {
     return playerTurn;
+  }
+
+  public Status getStatus() {
+    return status;
   }
 
   private void switchPlayers() {
@@ -41,7 +48,23 @@ public class Game {
     boolean validMove = playerTurn.makeMove(move);
 
     if (validMove) {
+      if (board.checkWin(playerTurn)) {
+        if (playerTurn.equals(playerWhite)) {
+          status = Status.WHITE_WINS;
+        } else {
+          status = Status.BLACK_WINS;
+        }
+
+        return true;
+      }
+
       this.switchPlayers();
+
+      if (board.checkDraw(this)) {
+        status = Status.DRAW;
+        return true;
+      }
+
       return true;
     } else {
       return false;

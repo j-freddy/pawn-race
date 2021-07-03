@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
@@ -28,10 +29,11 @@ public class Main extends Application {
   public final int boardWidth = 600;
   public final int boardHeight = 600;
 
-  /* ---------- Graphics ---------- */
+  /* ---------- Colours ---------- */
   public final Color colourCellLight = Color.rgb(233, 207, 190);
   public final Color colourCellDark = Color.rgb(172, 135, 72);
   public final Color colourCellHighlighted = Color.rgb(255, 255, 0, 0.3);
+  public final Color colourOverlay = Color.rgb(255, 255, 255, 0.5);
 
   /* ---------- Images ---------- */
   private final Map<Pair<PieceType, Colour>, Image> pieceImages = new HashMap<>();
@@ -106,7 +108,7 @@ public class Main extends Application {
     boardController.draw();
 
     // Set up app and display window
-    primaryStage.setTitle("Chess Java");
+    primaryStage.setTitle("Pawn Race Java");
     primaryStage.setScene(scene);
     primaryStage.show();
   }

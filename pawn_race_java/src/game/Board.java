@@ -55,6 +55,10 @@ public class Board {
     }
   }
 
+  public int getLastRow(Colour colour) {
+    return (colour == Colour.WHITE) ? (getNoRows() - 1) : 0;
+  }
+
   public Optional<Piece> findPieceAtPosition(Position position) {
     List<Piece> foundPieces = pieces
         .stream()
@@ -86,6 +90,26 @@ public class Board {
     assert kings.size() == 1;
     assert kings.get(0) instanceof King;
     return (King) kings.get(0);
+  }
+
+  public boolean checkWin(Player player) {
+    // In Pawn Race, a win is either your pawn reaches the end of the board,
+    return getPieces()
+        .stream()
+        .filter(piece -> piece.getColour() == player.getColour())
+        .anyMatch(piece -> piece.getPosition().getRow() == getLastRow(player.getColour()))
+    // or your opponent does not have any pieces left
+    || getPieces()
+        .stream()
+        .noneMatch(piece -> piece.getColour() != player.getColour());
+  }
+
+  // In Pawn Race, a draw is stalemate + player has some pieces remaining
+  public boolean checkDraw(Game game) {
+    return game.getPlayerTurn().getValidMoves().isEmpty()
+        && getPieces()
+            .stream()
+            .anyMatch(piece -> piece.getColour() == game.getPlayerTurn().getColour());
   }
 
   public Board copy() {

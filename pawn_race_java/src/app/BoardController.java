@@ -5,17 +5,21 @@ import game.Game;
 import game.misc.Colour;
 import game.misc.Move;
 import game.misc.Position;
+import game.misc.Status;
 import game.pieces.Pawn;
 import game.pieces.Piece;
+import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 
 import java.util.List;
 import java.util.Optional;
 
-enum Status {
+enum BoardStatus {
   TO_SELECT_PIECE,
   TO_MOVE_PIECE
 }
@@ -26,7 +30,7 @@ public class BoardController {
   private Game game;
 
   private boolean eventsEnabled = false;
-  private Status status = Status.TO_SELECT_PIECE;
+  private BoardStatus status = BoardStatus.TO_SELECT_PIECE;
   private Optional<Piece> selectedPiece = Optional.empty();
 
   public BoardController(Main gui, Canvas canvas, Game game) {
@@ -76,7 +80,7 @@ public class BoardController {
 
       // If selected piece is the same colour as player to move, it is a valid piece.
       if (piece.getColour() == game.getPlayerTurn().getColour()) {
-        status = Status.TO_MOVE_PIECE;
+        status = BoardStatus.TO_MOVE_PIECE;
         return true;
       }
     }
@@ -93,9 +97,15 @@ public class BoardController {
     // For now, if an invalid move is made, deselect the piece.
     // So we do the same thing regardless if a move is valid or not
     selectedPiece = Optional.empty();
-    status = Status.TO_SELECT_PIECE;
+    status = BoardStatus.TO_SELECT_PIECE;
 
     return success;
+  }
+
+  private void drawOverlay() {
+    GraphicsContext ctx = canvas.getGraphicsContext2D();
+    ctx.setFill(gui.colourOverlay);
+    ctx.fillRect(0, 0, getBoardWidth(), getBoardHeight());
   }
 
   // Draws board (without pieces)
@@ -199,11 +209,44 @@ public class BoardController {
     ctx.fillRect(x, y, getCellWidth(), getCellHeight());
   }
 
+  private void drawGameResult() {
+    String text;
+
+    switch (game.getStatus()) {
+      case WHITE_WINS -> text = "1 - 0";
+      case BLACK_WINS -> text = "0 - 1";
+      case DRAW       -> text = "0.5 - 0.5";
+      default         -> text = "Error";
+    }
+
+    assert(!text.equals("Error"));
+
+    GraphicsContext ctx = canvas.getGraphicsContext2D();
+    drawOverlay();
+
+    // Draw text
+    ctx.setFill(Color.BLACK);
+    ctx.setTextAlign(TextAlignment.CENTER);
+    ctx.setTextBaseline(VPos.CENTER);
+    // Note: I want to move this to Main, but I need getBoardWidth()
+    // So I cannot create this font before calling the constructor
+    ctx.setFont(new Font("sans-serif", getBoardWidth() * 0.1));
+    // Make text bold
+    ctx.setLineWidth(getCellWidth() * 0.04);
+    ctx.fillText(text, getBoardWidth() / 2.0, getBoardHeight() / 2.0);
+    ctx.strokeText(text, getBoardWidth() / 2.0, getBoardHeight() / 2.0);
+  }
+
   public void draw() {
     drawBase();
     drawPieces();
-    if (status == Status.TO_MOVE_PIECE) {
+
+    if (status == BoardStatus.TO_MOVE_PIECE) {
       drawValidMovesOfSelectedPiece();
+    }
+
+    if (game.getStatus() != Status.PLAYING) {
+      drawGameResult();
     }
   }
 
@@ -213,15 +256,17 @@ public class BoardController {
     }
 
     canvas.setOnMouseClicked(event -> {
-      Position cursorPos = getPosition(event.getSceneX(), event.getSceneY());
+      if (game.getStatus() == Status.PLAYING) {
+        Position cursorPos = getPosition(event.getSceneX(), event.getSceneY());
 
-      if (status == Status.TO_SELECT_PIECE) {
-        selectPiece(cursorPos);
-      } else if (status == Status.TO_MOVE_PIECE) {
-        movePiece(cursorPos);
+        if (status == BoardStatus.TO_SELECT_PIECE) {
+          selectPiece(cursorPos);
+        } else if (status == BoardStatus.TO_MOVE_PIECE) {
+          movePiece(cursorPos);
+        }
+        draw();
       }
 
-      draw();
     });
 
     eventsEnabled = true;
