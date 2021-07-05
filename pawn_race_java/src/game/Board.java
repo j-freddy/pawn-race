@@ -74,6 +74,13 @@ public class Board {
     }
   }
 
+  public List<Piece> getPieces(Colour colour) {
+    return pieces
+        .stream()
+        .filter(piece -> piece.getColour() == colour)
+        .toList();
+  }
+
   public Piece getPieceAtPosition(Position position) {
     Optional<Piece> maybePiece = findPieceAtPosition(position);
     assert maybePiece.isPresent();
@@ -92,24 +99,28 @@ public class Board {
     return (King) kings.get(0);
   }
 
-  public boolean checkWin(Player player) {
+  public boolean checkWin(Colour colour) {
     // In Pawn Race, a win is either your pawn reaches the end of the board,
     return getPieces()
         .stream()
-        .filter(piece -> piece.getColour() == player.getColour())
-        .anyMatch(piece -> piece.getPosition().getRow() == getLastRow(player.getColour()))
+        .filter(piece -> piece.getColour() == colour)
+        .anyMatch(piece -> piece.getPosition().getRow() == getLastRow(colour))
     // or your opponent does not have any pieces left
     || getPieces()
         .stream()
-        .noneMatch(piece -> piece.getColour() != player.getColour());
+        .noneMatch(piece -> piece.getColour() != colour);
+  }
+
+  public boolean checkDraw(Player playerToMove) {
+    return playerToMove.getValidMoves().isEmpty()
+        && getPieces()
+        .stream()
+        .anyMatch(piece -> piece.getColour() == playerToMove.getColour());
   }
 
   // In Pawn Race, a draw is stalemate + player has some pieces remaining
   public boolean checkDraw(Game game) {
-    return game.getPlayerTurn().getValidMoves().isEmpty()
-        && getPieces()
-            .stream()
-            .anyMatch(piece -> piece.getColour() == game.getPlayerTurn().getColour());
+    return checkDraw(game.getPlayerTurn());
   }
 
   public Board copy() {

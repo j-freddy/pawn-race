@@ -2,6 +2,7 @@ package game;
 
 import game.AI.AI;
 import game.AI.AIController;
+import game.AI.AIMinimax;
 import game.AI.AIRandomMover;
 import game.misc.Colour;
 import game.misc.Move;
@@ -20,6 +21,7 @@ public class Game {
   private Status status;
 
   // Declare any AI prototypes here
+  // Use null for player to control
   /**
    * Refactoring:
    * Currently, AIs are controlled by the AIController.
@@ -27,8 +29,8 @@ public class Game {
    * This should be refactored so the controller does not require the GUI,
    * so the controller can be instantiated and run here.
    */
-  public final AI aiWhite = new AIRandomMover(this, Colour.WHITE);
-  public final AI aiBlack = null;
+  public final AI aiWhite = null;
+  public final AI aiBlack = new AIMinimax(this, Colour.BLACK);
 
   public Game() {
     this.board = new Board();
@@ -62,7 +64,7 @@ public class Game {
     boolean validMove = playerTurn.makeMove(move);
 
     if (validMove) {
-      if (board.checkWin(playerTurn)) {
+      if (board.checkWin(playerTurn.getColour())) {
         if (playerTurn.equals(playerWhite)) {
           status = Status.WHITE_WINS;
         } else {

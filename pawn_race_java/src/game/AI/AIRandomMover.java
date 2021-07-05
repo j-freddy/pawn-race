@@ -1,8 +1,11 @@
 package game.AI;
 
+import game.Board;
 import game.Game;
+import game.Player;
 import game.misc.Colour;
 import game.misc.Move;
+import lib.NodeTree;
 
 import java.util.List;
 import java.util.Random;
@@ -20,7 +23,7 @@ public class AIRandomMover implements AI {
 
   @Override
   public Colour getColour() {
-    return this.colour;
+    return colour;
   }
 
   @Override
@@ -28,4 +31,5 @@ public class AIRandomMover implements AI {
     List<Move> validMoves = game.getPlayerTurn().getValidMoves();
     return validMoves.get(random.nextInt(validMoves.size()));
   }
+
 }
