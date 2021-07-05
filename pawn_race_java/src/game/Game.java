@@ -1,5 +1,8 @@
 package game;
 
+import game.AI.AI;
+import game.AI.AIController;
+import game.AI.AIRandomMover;
 import game.misc.Colour;
 import game.misc.Move;
 import game.misc.Status;
@@ -15,6 +18,17 @@ public class Game {
   private Player playerBlack;
   private Player playerTurn;
   private Status status;
+
+  // Declare any AI prototypes here
+  /**
+   * Refactoring:
+   * Currently, AIs are controlled by the AIController.
+   * The AIController is instantiated in the GUI, since it needs the GUI as an attribute.
+   * This should be refactored so the controller does not require the GUI,
+   * so the controller can be instantiated and run here.
+   */
+  public final AI aiWhite = new AIRandomMover(this, Colour.WHITE);
+  public final AI aiBlack = null;
 
   public Game() {
     this.board = new Board();

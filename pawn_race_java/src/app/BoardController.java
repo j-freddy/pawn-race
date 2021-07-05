@@ -262,7 +262,21 @@ public class BoardController {
         if (status == BoardStatus.TO_SELECT_PIECE) {
           selectPiece(cursorPos);
         } else if (status == BoardStatus.TO_MOVE_PIECE) {
-          movePiece(cursorPos);
+          boolean validMove = movePiece(cursorPos);
+
+          // TODO: Delete this... this simulates a random moving AI
+          /**
+           * When making an actual AI, this code looks good
+           * So, make AI a runnable object, and pass @game
+           * Try not to pass @boardController
+           * (only purpose: draw() after making move, so see if we can do that elsewhere)
+           */
+//          if (validMove) {
+//            ThreadTest randomAI = new ThreadTest(game, this);
+//            Thread thread = new Thread(randomAI);
+//            thread.start();
+//          }
+          // TODO: End of delete section
         }
         draw();
       }

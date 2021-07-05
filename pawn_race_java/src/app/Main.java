@@ -1,5 +1,6 @@
 package app;
 
+import game.AI.AIController;
 import game.Game;
 import game.misc.Colour;
 import game.pieces.Piece;
@@ -106,6 +107,11 @@ public class Main extends Application {
     boardController = new BoardController(this, canvas, game);
     boardController.enableEvents();
     boardController.draw();
+
+    // Start the AIs (need refactoring)
+    AIController aiController = new AIController(game.aiWhite, game.aiBlack, game, boardController);
+    Thread thread = new Thread(aiController);
+    thread.start();
 
     // Set up app and display window
     primaryStage.setTitle("Pawn Race Java");
