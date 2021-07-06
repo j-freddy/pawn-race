@@ -5,19 +5,22 @@ import game.Game;
 import game.Player;
 import game.misc.Colour;
 import game.misc.Move;
+import game.misc.Position;
+import game.pieces.Piece;
 import lib.NodeTree;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 
-// AI is always the maximiser, regardless of colour.
 public class AIMinimax implements AI {
-  private Random random = new Random();
-
   private final Game game;
   private final Colour colour;
+  // Best to keep @Max_DEPTH even if AI is white
+  // Best to keep @MAX_DEPTH odd if AI is Black
+  // (it only affects the evaluation function due to the space factor, but performance is not affected)
   private final int MAX_DEPTH = 5;
+  // Made evaluation an integer instead of a double
+  // So we introduce @EVALUATION_FACTOR - will refactor
+  private final int EVALUATION_FACTOR = 100;
   private int visitedNodesCount;
 
   public AIMinimax(Game game, Colour colour) {
@@ -31,36 +34,131 @@ public class AIMinimax implements AI {
     return colour;
   }
 
+  private boolean isMaximiser() {
+    return colour == Colour.WHITE;
+  }
+
   private Colour getOppositeColour(Colour c) {
     return (c == Colour.WHITE) ? Colour.BLACK : Colour.WHITE;
   }
 
+  // The notion of space will help us evaluate a static position
+  private int getSpaceOfPiece(Piece piece) {
+    int space = piece.getPosition().getRow();
+
+    if (piece.getColour() == Colour.BLACK) {
+      space = game.getBoard().getNoRows() - space - 1;
+    }
+
+    return space;
+  }
+
+  private int getSpace(Board board, Colour c) {
+    return board.getPieces(c)
+        .stream()
+        .map(this::getSpaceOfPiece)
+        .reduce(Integer::sum)
+        .orElse(-1);
+  }
+
+  private List<Piece> getPassedPawns(Board board, Colour targetColour) {
+    Colour oppositeColour = getOppositeColour(targetColour);
+
+    return board.getPieces(targetColour)
+        .stream()
+        .filter(
+            piece -> {
+              // Check piece is passed
+              // Means no opposite coloured pawns are ahead of it
+              int noOpponentObstructions = board.getPieces(oppositeColour)
+                  .stream()
+                  .filter(opponentPiece -> {
+                    Position piecePos = piece.getPosition();
+                    Position opponentPiecePos = opponentPiece.getPosition();
+
+                    // Opponent pawn isn't in adjacent column
+                    if (Math.abs(piecePos.getColumn() - opponentPiecePos.getColumn()) > 1) {
+                      return false;
+                    }
+
+                    if (targetColour == Colour.WHITE) {
+                      return opponentPiecePos.getRow() > piecePos.getRow();
+                    } else {
+                      return opponentPiecePos.getRow() < piecePos.getRow();
+                    }
+                  })
+                  .toList()
+                  .size();
+
+              return noOpponentObstructions == 0;
+            }
+        )
+        .toList();
+  }
+
+  private Optional<Piece> getMostPushedPassedPawn(Board board, Colour targetColour) {
+    if (targetColour == Colour.WHITE) {
+      return getPassedPawns(board, targetColour)
+          .stream()
+          .max(Comparator.comparing(piece -> piece.getPosition().getRow()));
+    } else {
+      return getPassedPawns(board, targetColour)
+          .stream()
+          .min(Comparator.comparing(piece -> piece.getPosition().getRow()));
+    }
+  }
+
   // Give a static evaluation of the board (without looking ahead)
   // Assuming the position is not over
-  private int evaluatePosition(Board board) {
+  private int evaluatePosition(Board board, Colour colourToMove) {
+    // Factor 1: passed pawns (deterministic)
+    Optional<Piece> whitePassedPawn = getMostPushedPassedPawn(board, Colour.WHITE);
+    Optional<Piece> blackPassedPawn = getMostPushedPassedPawn(board, Colour.BLACK);
+
+    if (whitePassedPawn.isPresent() && blackPassedPawn.isPresent()) {
+      Piece wp = whitePassedPawn.get();
+      Piece bp = blackPassedPawn.get();
+
+      if (getSpaceOfPiece(wp) > getSpaceOfPiece(bp)) return Integer.MAX_VALUE;
+      if (getSpaceOfPiece(bp) > getSpaceOfPiece(wp)) return Integer.MAX_VALUE;
+
+      // If both players need same amount of moves to push pawn, player who moves first wins
+      return colourToMove == Colour.WHITE ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    } else if (whitePassedPawn.isPresent()) {
+      return Integer.MAX_VALUE;
+    } else if (blackPassedPawn.isPresent()) {
+      return Integer.MIN_VALUE;
+    }
+
     int evaluation = 0;
 
-    // Factor 1: number of pieces on the board
-    int numMyPieces = board.getPieces(colour).size();
-    int numOpponentPieces = board.getPieces(getOppositeColour(colour)).size();
-    evaluation += numMyPieces - numOpponentPieces;
+    // Factor 2: number of pieces on the board
+    int numWhitePieces = board.getPieces(Colour.WHITE).size();
+    int numBlackPieces = board.getPieces(Colour.BLACK).size();
+    evaluation += (numWhitePieces - numBlackPieces) * EVALUATION_FACTOR;
+
+    // Factor 3: space of each player
+    int whiteSpace = getSpace(board, Colour.WHITE);
+    int blackSpace = getSpace(board, Colour.BLACK);
+    evaluation += (whiteSpace - blackSpace) * EVALUATION_FACTOR * 0.2;
 
     return evaluation;
   }
 
   private NodeData evaluateNode(NodeTree.Node<NodeData> node) {
     Board board = node.value.currBoard;
-    Player player = new Player(node.value.colourToMove, board);
+    Colour colourToMove = node.value.colourToMove;
+    Player player = new Player(colourToMove, board);
 
-    if (board.checkWin(colour)) {
+    if (board.checkWin(Colour.WHITE)) {
       node.value.weight = Integer.MAX_VALUE;
-    } else if (board.checkWin(getOppositeColour(colour))) {
+    } else if (board.checkWin(Colour.BLACK)) {
       node.value.weight = Integer.MIN_VALUE;
     } else if (board.checkDraw(player)) {
       node.value.weight = 0;
     } else {
       // Current position is not over
-      node.value.weight = evaluatePosition(board);
+      node.value.weight = evaluatePosition(board, colourToMove);
     }
 
     return node.value;
@@ -183,7 +281,11 @@ public class AIMinimax implements AI {
     }
 
     // Recursive case: extend node
-    for (Move move : playerOfCurrBoard.getValidMoves()) {
+    List<Move> moves = playerOfCurrBoard.getValidMoves();
+    // Let's shuffle the order of moves for variety
+    Collections.shuffle(moves);
+
+    for (Move move : moves) {
       Board boardCopy = curr.value.currBoard.copy();
 
       // Make move and create node
@@ -210,7 +312,7 @@ public class AIMinimax implements AI {
     Move chosenMove;
 
     NodeTree<NodeData> tree = createTree(game.getBoard());
-    int childIndex = minimax(tree, MAX_DEPTH, true);
+    int childIndex = minimax(tree, MAX_DEPTH, isMaximiser());
     NodeData chosenMoveData = tree.getRootNode().getChild(childIndex).value;
 
     System.out.println("Size of tree: " + tree.getSize());
@@ -218,6 +320,7 @@ public class AIMinimax implements AI {
     System.out.println("Evaluation (me): " + chosenMoveData.weight);
 
     chosenMove = chosenMoveData.move;
+
     return chosenMove;
   }
 
@@ -251,5 +354,13 @@ public class AIMinimax implements AI {
     public String toString() {
       return String.valueOf(weight);
     }
+  }
+
+  public static void main(String[] args) {
+    AIMinimax ai = new AIMinimax(null, null);
+    Board b = new Board();
+
+    List<Piece> passedWhitePawns = ai.getPassedPawns(b, Colour.WHITE);
+    System.out.println(passedWhitePawns);
   }
 }

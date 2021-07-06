@@ -29,7 +29,7 @@ public class Game {
    * This should be refactored so the controller does not require the GUI,
    * so the controller can be instantiated and run here.
    */
-  public final AI aiWhite = null;
+  public final AI aiWhite = new AIMinimax(this, Colour.WHITE);
   public final AI aiBlack = new AIMinimax(this, Colour.BLACK);
 
   public Game() {
